@@ -43,56 +43,52 @@
 #include <iostream>
 
 #include "fcl/common/unused.h"
-
-#include "fcl/math/constants.h"
-#include "fcl/math/triangle.h"
-
-#include "fcl/geometry/shape/box.h"
-#include "fcl/geometry/shape/sphere.h"
-#include "fcl/geometry/shape/cylinder.h"
 #include "fcl/geometry/bvh/BVH_model.h"
 #include "fcl/geometry/octree/octree.h"
-
+#include "fcl/geometry/shape/box.h"
+#include "fcl/geometry/shape/cylinder.h"
+#include "fcl/geometry/shape/sphere.h"
+#include "fcl/math/constants.h"
+#include "fcl/math/triangle.h"
 #include "fcl/narrowphase/collision.h"
-#include "fcl/narrowphase/distance.h"
 #include "fcl/narrowphase/collision_object.h"
 #include "fcl/narrowphase/collision_result.h"
 #include "fcl/narrowphase/continuous_collision_object.h"
 #include "fcl/narrowphase/continuous_collision_request.h"
 #include "fcl/narrowphase/continuous_collision_result.h"
+#include "fcl/narrowphase/distance.h"
 
 #ifdef _WIN32
-#define NOMINMAX  // required to avoid compilation errors with Visual Studio 2010
+#define NOMINMAX  // required to avoid compilation errors with Visual Studio
+                  // 2010
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
 
-namespace fcl
-{
+namespace fcl {
 
-namespace test
-{
+namespace test {
 
-class Timer
-{
-public:
+class Timer {
+ public:
   Timer();
   ~Timer();
 
-  void start();                               ///< start timer
-  void stop();                                ///< stop the timer
-  double getElapsedTime();                    ///< get elapsed time in milli-second
-  double getElapsedTimeInSec();               ///< get elapsed time in second (same as getElapsedTime)
-  double getElapsedTimeInMilliSec();          ///< get elapsed time in milli-second
-  double getElapsedTimeInMicroSec();          ///< get elapsed time in micro-second
+  void start();                       ///< start timer
+  void stop();                        ///< stop the timer
+  double getElapsedTime();            ///< get elapsed time in milli-second
+  double getElapsedTimeInSec();       ///< get elapsed time in second (same as
+                                      ///< getElapsedTime)
+  double getElapsedTimeInMilliSec();  ///< get elapsed time in milli-second
+  double getElapsedTimeInMicroSec();  ///< get elapsed time in micro-second
 
-private:
-  double startTimeInMicroSec;                 ///< starting time in micro-second
-  double endTimeInMicroSec;                   ///< ending time in micro-second
-  int stopped;                                ///< stop flag
+ private:
+  double startTimeInMicroSec;  ///< starting time in micro-second
+  double endTimeInMicroSec;    ///< ending time in micro-second
+  int stopped;                 ///< stop flag
 #ifdef _WIN32
-  LARGE_INTEGER frequency;                    ///< ticks per second
+  LARGE_INTEGER frequency;  ///< ticks per second
   LARGE_INTEGER startCount;
   LARGE_INTEGER endCount;
 #else
@@ -101,15 +97,13 @@ private:
 #endif
 };
 
-struct TStruct
-{
+struct TStruct {
   std::vector<double> records;
   double overall_time;
 
   TStruct() { overall_time = 0; }
 
-  void push_back(double t)
-  {
+  void push_back(double t) {
     records.push_back(t);
     overall_time += t;
   }
@@ -117,10 +111,12 @@ struct TStruct
 
 /// @brief Load an obj mesh file
 template <typename S>
-void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vector<Triangle>& triangles);
+void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points,
+                 std::vector<Triangle>& triangles);
 
 template <typename S>
-void saveOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vector<Triangle>& triangles);
+void saveOBJFile(const char* filename, std::vector<Vector3<S>>& points,
+                 std::vector<Triangle>& triangles);
 
 template <typename S>
 S rand_interval(S rmin, S rmax);
@@ -128,37 +124,58 @@ S rand_interval(S rmin, S rmax);
 template <typename S>
 void eulerToMatrix(S a, S b, S c, Matrix3<S>& R);
 
-/// @brief Generate one random transform whose translation is constrained by extents and rotation without constraints.
-/// The translation is (x, y, z), and extents[0] <= x <= extents[3], extents[1] <= y <= extents[4], extents[2] <= z <= extents[5]
+/// @brief Generate one random transform whose translation is constrained by
+/// extents and rotation without constraints. The translation is (x, y, z), and
+/// extents[0] <= x <= extents[3], extents[1] <= y <= extents[4], extents[2] <=
+/// z <= extents[5]
 template <typename S>
 void generateRandomTransform(S extents[6], Transform3<S>& transform);
 
-/// @brief Generate n random transforms whose translations are constrained by extents.
+/// @brief Generate n random transforms whose translations are constrained by
+/// extents.
 template <typename S>
-void generateRandomTransforms(S extents[6], aligned_vector<Transform3<S>>& transforms, std::size_t n);
+void generateRandomTransforms(S extents[6],
+                              aligned_vector<Transform3<S>>& transforms,
+                              std::size_t n);
 
-/// @brief Generate n random transforms whose translations are constrained by extents. Also generate another transforms2 which have additional random translation & rotation to the transforms generated.
+/// @brief Generate n random transforms whose translations are constrained by
+/// extents. Also generate another transforms2 which have additional random
+/// translation & rotation to the transforms generated.
 template <typename S>
-void generateRandomTransforms(S extents[6], S delta_trans[3], S delta_rot, aligned_vector<Transform3<S>>& transforms, aligned_vector<Transform3<S>>& transforms2, std::size_t n);
+void generateRandomTransforms(S extents[6], S delta_trans[3], S delta_rot,
+                              aligned_vector<Transform3<S>>& transforms,
+                              aligned_vector<Transform3<S>>& transforms2,
+                              std::size_t n);
 
-/// @brief Generate n random tranforms and transform2 with addtional random translation/rotation. The transforms and transform2 are used as initial and goal configurations for the first mesh. The second mesh is in I. This is used for continuous collision detection checking.
+/// @brief Generate n random tranforms and transform2 with addtional random
+/// translation/rotation. The transforms and transform2 are used as initial and
+/// goal configurations for the first mesh. The second mesh is in I. This is
+/// used for continuous collision detection checking.
 template <typename S>
-void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& transforms, aligned_vector<Transform3<S>>& transforms2, S delta_trans[3], S delta_rot, std::size_t n,
-                                 const std::vector<Vector3<S>>& vertices1, const std::vector<Triangle>& triangles1,
-                                 const std::vector<Vector3<S>>& vertices2, const std::vector<Triangle>& triangles2);
+void generateRandomTransforms_ccd(S extents[6],
+                                  aligned_vector<Transform3<S>>& transforms,
+                                  aligned_vector<Transform3<S>>& transforms2,
+                                  S delta_trans[3], S delta_rot, std::size_t n,
+                                  const std::vector<Vector3<S>>& vertices1,
+                                  const std::vector<Triangle>& triangles1,
+                                  const std::vector<Vector3<S>>& vertices2,
+                                  const std::vector<Triangle>& triangles2);
 
-/// @brief Generate environment with 3 * n objects: n boxes, n spheres and n cylinders.
+/// @brief Generate environment with 3 * n objects: n boxes, n spheres and n
+/// cylinders.
 template <typename S>
-void generateEnvironments(std::vector<CollisionObject<S>*>& env, S env_scale, std::size_t n);
+void generateEnvironments(std::vector<CollisionObject<S>*>& env, S env_scale,
+                          std::size_t n);
 
 /// @brief Generate environment with 3 * n objects, but all in meshes.
 template <typename S>
-void generateEnvironmentsMesh(std::vector<CollisionObject<S>*>& env, S env_scale, std::size_t n);
+void generateEnvironmentsMesh(std::vector<CollisionObject<S>*>& env,
+                              S env_scale, std::size_t n);
 
-/// @brief Structure for minimum distance between two meshes and the corresponding nearest point pair
+/// @brief Structure for minimum distance between two meshes and the
+/// corresponding nearest point pair
 template <typename S>
-struct DistanceRes
-{
+struct DistanceRes {
   S distance;
   Vector3<S> p1;
   Vector3<S> p2;
@@ -172,14 +189,16 @@ std::string getGJKSolverName(GJKSolverType solver_type);
 
 /// @brief Generate boxes from the octomap
 template <typename S>
-void generateBoxesFromOctomap(std::vector<CollisionObject<S>*>& env, OcTree<S>& tree);
+void generateBoxesFromOctomap(std::vector<CollisionObject<S>*>& env,
+                              OcTree<S>& tree);
 
 /// @brief Generate boxes from the octomap
 template <typename S>
-void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& env, OcTree<S>& tree);
+void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& env,
+                                  OcTree<S>& tree);
 
 /// @brief Generate an octree
-octomap::OcTree* generateOcTree(double resolution = 0.1);
+octomap::ColorOcTree* generateOcTree(double resolution = 0.1);
 
 #endif
 
@@ -191,12 +210,10 @@ octomap::OcTree* generateOcTree(double resolution = 0.1);
 
 //==============================================================================
 template <typename S>
-void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vector<Triangle>& triangles)
-{
-
+void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points,
+                 std::vector<Triangle>& triangles) {
   FILE* file = fopen(filename, "rb");
-  if(!file)
-  {
+  if (!file) {
     std::cerr << "file not exist" << std::endl;
     return;
   }
@@ -204,64 +221,46 @@ void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vec
   bool has_normal = false;
   bool has_texture = false;
   char line_buffer[2000];
-  while(fgets(line_buffer, 2000, file))
-  {
+  while (fgets(line_buffer, 2000, file)) {
     char* first_token = strtok(line_buffer, "\r\n\t ");
-    if(!first_token || first_token[0] == '#' || first_token[0] == 0)
-      continue;
+    if (!first_token || first_token[0] == '#' || first_token[0] == 0) continue;
 
-    switch(first_token[0])
-    {
-    case 'v':
-      {
-        if(first_token[1] == 'n')
-        {
+    switch (first_token[0]) {
+      case 'v': {
+        if (first_token[1] == 'n') {
           strtok(nullptr, "\t ");
           strtok(nullptr, "\t ");
           strtok(nullptr, "\t ");
           has_normal = true;
-        }
-        else if(first_token[1] == 't')
-        {
+        } else if (first_token[1] == 't') {
           strtok(nullptr, "\t ");
           strtok(nullptr, "\t ");
           has_texture = true;
-        }
-        else
-        {
+        } else {
           S x = (S)atof(strtok(nullptr, "\t "));
           S y = (S)atof(strtok(nullptr, "\t "));
           S z = (S)atof(strtok(nullptr, "\t "));
           points.emplace_back(x, y, z);
         }
-      }
-      break;
-    case 'f':
-      {
+      } break;
+      case 'f': {
         Triangle tri;
         char* data[30];
         int n = 0;
-        while((data[n] = strtok(nullptr, "\t \r\n")) != nullptr)
-        {
-          if(strlen(data[n]))
-            n++;
+        while ((data[n] = strtok(nullptr, "\t \r\n")) != nullptr) {
+          if (strlen(data[n])) n++;
         }
 
-        for(int t = 0; t < (n - 2); ++t)
-        {
-          if((!has_texture) && (!has_normal))
-          {
+        for (int t = 0; t < (n - 2); ++t) {
+          if ((!has_texture) && (!has_normal)) {
             tri[0] = atoi(data[0]) - 1;
             tri[1] = atoi(data[1]) - 1;
             tri[2] = atoi(data[2]) - 1;
-          }
-          else
-          {
-            const char *v1;
-            for(int i = 0; i < 3; i++)
-            {
+          } else {
+            const char* v1;
+            for (int i = 0; i < 3; i++) {
               // vertex ID
-              if(i == 0)
+              if (i == 0)
                 v1 = data[0];
               else
                 v1 = data[t + i];
@@ -278,23 +277,22 @@ void loadOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vec
 
 //==============================================================================
 template <typename S>
-void saveOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vector<Triangle>& triangles)
-{
+void saveOBJFile(const char* filename, std::vector<Vector3<S>>& points,
+                 std::vector<Triangle>& triangles) {
   std::ofstream os(filename);
-  if(!os)
-  {
+  if (!os) {
     std::cerr << "file not exist" << std::endl;
     return;
   }
 
-  for(std::size_t i = 0; i < points.size(); ++i)
-  {
-    os << "v " << points[i][0] << " " << points[i][1] << " " << points[i][2] << std::endl;
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    os << "v " << points[i][0] << " " << points[i][1] << " " << points[i][2]
+       << std::endl;
   }
 
-  for(std::size_t i = 0; i < triangles.size(); ++i)
-  {
-    os << "f " << triangles[i][0] + 1 << " " << triangles[i][1] + 1 << " " << triangles[i][2] + 1 << std::endl;
+  for (std::size_t i = 0; i < triangles.size(); ++i) {
+    os << "f " << triangles[i][0] + 1 << " " << triangles[i][1] + 1 << " "
+       << triangles[i][2] + 1 << std::endl;
   }
 
   os.close();
@@ -302,16 +300,14 @@ void saveOBJFile(const char* filename, std::vector<Vector3<S>>& points, std::vec
 
 //==============================================================================
 template <typename S>
-S rand_interval(S rmin, S rmax)
-{
+S rand_interval(S rmin, S rmax) {
   S t = rand() / ((S)RAND_MAX + 1);
   return (t * (rmax - rmin) + rmin);
 }
 
 //==============================================================================
 template <typename S>
-void eulerToMatrix(S a, S b, S c, Matrix3<S>& R)
-{
+void eulerToMatrix(S a, S b, S c, Matrix3<S>& R) {
   auto c1 = std::cos(a);
   auto c2 = std::cos(b);
   auto c3 = std::cos(c);
@@ -319,15 +315,14 @@ void eulerToMatrix(S a, S b, S c, Matrix3<S>& R)
   auto s2 = std::sin(b);
   auto s3 = std::sin(c);
 
-  R << c1 * c2, - c2 * s1, s2,
-      c3 * s1 + c1 * s2 * s3, c1 * c3 - s1 * s2 * s3, - c2 * s3,
-      s1 * s3 - c1 * c3 * s2, c3 * s1 * s2 + c1 * s3, c2 * c3;
+  R << c1 * c2, -c2 * s1, s2, c3 * s1 + c1 * s2 * s3, c1 * c3 - s1 * s2 * s3,
+      -c2 * s3, s1 * s3 - c1 * c3 * s2, c3 * s1 * s2 + c1 * s3, c2 * c3;
 }
 
 //==============================================================================
 template <typename S>
-void generateRandomTransform(const std::array<S, 6>& extents, Transform3<S>& transform)
-{
+void generateRandomTransform(const std::array<S, 6>& extents,
+                             Transform3<S>& transform) {
   auto x = rand_interval(extents[0], extents[3]);
   auto y = rand_interval(extents[1], extents[4]);
   auto z = rand_interval(extents[2], extents[5]);
@@ -346,11 +341,11 @@ void generateRandomTransform(const std::array<S, 6>& extents, Transform3<S>& tra
 
 //==============================================================================
 template <typename S>
-void generateRandomTransforms(S extents[6], aligned_vector<Transform3<S>>& transforms, std::size_t n)
-{
+void generateRandomTransforms(S extents[6],
+                              aligned_vector<Transform3<S>>& transforms,
+                              std::size_t n) {
   transforms.resize(n);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     auto x = rand_interval(extents[0], extents[3]);
     auto y = rand_interval(extents[1], extents[4]);
     auto z = rand_interval(extents[2], extents[5]);
@@ -373,12 +368,13 @@ void generateRandomTransforms(S extents[6], aligned_vector<Transform3<S>>& trans
 
 //==============================================================================
 template <typename S>
-void generateRandomTransforms(S extents[6], S delta_trans[3], S delta_rot, aligned_vector<Transform3<S>>& transforms, aligned_vector<Transform3<S>>& transforms2, std::size_t n)
-{
+void generateRandomTransforms(S extents[6], S delta_trans[3], S delta_rot,
+                              aligned_vector<Transform3<S>>& transforms,
+                              aligned_vector<Transform3<S>>& transforms2,
+                              std::size_t n) {
   transforms.resize(n);
   transforms2.resize(n);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     auto x = rand_interval(extents[0], extents[3]);
     auto y = rand_interval(extents[1], extents[4]);
     auto z = rand_interval(extents[2], extents[5]);
@@ -418,10 +414,14 @@ void generateRandomTransforms(S extents[6], S delta_trans[3], S delta_rot, align
 
 //==============================================================================
 template <typename S>
-void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& transforms, aligned_vector<Transform3<S>>& transforms2, S delta_trans[3], S delta_rot, std::size_t n,
-                                 const std::vector<Vector3<S>>& vertices1, const std::vector<Triangle>& triangles1,
-                                 const std::vector<Vector3<S>>& vertices2, const std::vector<Triangle>& triangles2)
-{
+void generateRandomTransforms_ccd(S extents[6],
+                                  aligned_vector<Transform3<S>>& transforms,
+                                  aligned_vector<Transform3<S>>& transforms2,
+                                  S delta_trans[3], S delta_rot, std::size_t n,
+                                  const std::vector<Vector3<S>>& vertices1,
+                                  const std::vector<Triangle>& triangles1,
+                                  const std::vector<Vector3<S>>& vertices2,
+                                  const std::vector<Triangle>& triangles2) {
   FCL_UNUSED(vertices1);
   FCL_UNUSED(triangles1);
   FCL_UNUSED(vertices2);
@@ -430,8 +430,7 @@ void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& t
   transforms.resize(n);
   transforms2.resize(n);
 
-  for(std::size_t i = 0; i < n;)
-  {
+  for (std::size_t i = 0; i < n;) {
     auto x = rand_interval(extents[0], extents[3]);
     auto y = rand_interval(extents[1], extents[4]);
     auto z = rand_interval(extents[2], extents[5]);
@@ -441,7 +440,6 @@ void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& t
     auto b = rand_interval(0, 2 * pi);
     auto c = rand_interval(0, 2 * pi);
 
-
     Matrix3<S> R;
     eulerToMatrix(a, b, c, R);
     Vector3<S> T(x, y, z);
@@ -449,7 +447,7 @@ void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& t
     tf.linear() = R;
     tf.translation() = T;
 
-    std::vector<std::pair<int, int> > results;
+    std::vector<std::pair<int, int>> results;
     {
       transforms[i] = tf;
 
@@ -473,65 +471,67 @@ void generateRandomTransforms_ccd(S extents[6], aligned_vector<Transform3<S>>& t
 
 //==============================================================================
 template <typename S>
-void generateEnvironments(std::vector<CollisionObject<S>*>& env, S env_scale, std::size_t n)
-{
-  S extents[] = {-env_scale, env_scale, -env_scale, env_scale, -env_scale, env_scale};
+void generateEnvironments(std::vector<CollisionObject<S>*>& env, S env_scale,
+                          std::size_t n) {
+  S extents[] = {-env_scale, env_scale,  -env_scale,
+                 env_scale,  -env_scale, env_scale};
   aligned_vector<Transform3<S>> transforms;
 
   generateRandomTransforms(extents, transforms, n);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     Box<S>* box = new Box<S>(5, 10, 20);
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(box), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(box), transforms[i]));
   }
 
   generateRandomTransforms(extents, transforms, n);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     Sphere<S>* sphere = new Sphere<S>(30);
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(sphere), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(sphere), transforms[i]));
   }
 
   generateRandomTransforms(extents, transforms, n);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     Cylinder<S>* cylinder = new Cylinder<S>(10, 40);
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(cylinder), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(cylinder), transforms[i]));
   }
 }
 
 //==============================================================================
 template <typename S>
-void generateEnvironmentsMesh(std::vector<CollisionObject<S>*>& env, S env_scale, std::size_t n)
-{
-  S extents[] = {-env_scale, env_scale, -env_scale, env_scale, -env_scale, env_scale};
+void generateEnvironmentsMesh(std::vector<CollisionObject<S>*>& env,
+                              S env_scale, std::size_t n) {
+  S extents[] = {-env_scale, env_scale,  -env_scale,
+                 env_scale,  -env_scale, env_scale};
   aligned_vector<Transform3<S>> transforms;
 
   generateRandomTransforms(extents, transforms, n);
   Box<S> box(5, 10, 20);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     BVHModel<OBBRSS<S>>* model = new BVHModel<OBBRSS<S>>();
     generateBVHModel(*model, box, Transform3<S>::Identity());
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
   }
 
   generateRandomTransforms(extents, transforms, n);
   Sphere<S> sphere(30);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     BVHModel<OBBRSS<S>>* model = new BVHModel<OBBRSS<S>>();
     generateBVHModel(*model, sphere, Transform3<S>::Identity(), 16, 16);
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
   }
 
   generateRandomTransforms(extents, transforms, n);
   Cylinder<S> cylinder(10, 40);
-  for(std::size_t i = 0; i < n; ++i)
-  {
+  for (std::size_t i = 0; i < n; ++i) {
     BVHModel<OBBRSS<S>>* model = new BVHModel<OBBRSS<S>>();
     generateBVHModel(*model, cylinder, Transform3<S>::Identity(), 16, 16);
-    env.push_back(new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
+    env.push_back(new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(model), transforms[i]));
   }
 }
 
@@ -539,12 +539,11 @@ void generateEnvironmentsMesh(std::vector<CollisionObject<S>*>& env, S env_scale
 
 //==============================================================================
 template <typename S>
-void generateBoxesFromOctomap(std::vector<CollisionObject<S>*>& boxes, OcTree<S>& tree)
-{
-  std::vector<std::array<S, 6> > boxes_ = tree.toBoxes();
+void generateBoxesFromOctomap(std::vector<CollisionObject<S>*>& boxes,
+                              OcTree<S>& tree) {
+  std::vector<std::array<S, 6>> boxes_ = tree.toBoxes();
 
-  for(std::size_t i = 0; i < boxes_.size(); ++i)
-  {
+  for (std::size_t i = 0; i < boxes_.size(); ++i) {
     S x = boxes_[i][0];
     S y = boxes_[i][1];
     S z = boxes_[i][2];
@@ -555,22 +554,22 @@ void generateBoxesFromOctomap(std::vector<CollisionObject<S>*>& boxes, OcTree<S>
     Box<S>* box = new Box<S>(size, size, size);
     box->cost_density = cost;
     box->threshold_occupied = threshold;
-    CollisionObject<S>* obj = new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(box), Transform3<S>(Translation3<S>(Vector3<S>(x, y, z))));
+    CollisionObject<S>* obj = new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(box),
+        Transform3<S>(Translation3<S>(Vector3<S>(x, y, z))));
     boxes.push_back(obj);
   }
 
   std::cout << "boxes size: " << boxes.size() << std::endl;
-
 }
 
 //==============================================================================
 template <typename S>
-void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& boxes, OcTree<S>& tree)
-{
-  std::vector<std::array<S, 6> > boxes_ = tree.toBoxes();
+void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& boxes,
+                                  OcTree<S>& tree) {
+  std::vector<std::array<S, 6>> boxes_ = tree.toBoxes();
 
-  for(std::size_t i = 0; i < boxes_.size(); ++i)
-  {
+  for (std::size_t i = 0; i < boxes_.size(); ++i) {
     S x = boxes_[i][0];
     S y = boxes_[i][1];
     S z = boxes_[i][2];
@@ -583,7 +582,9 @@ void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& boxes, OcTre
     generateBVHModel(*model, box, Transform3<S>::Identity());
     model->cost_density = cost;
     model->threshold_occupied = threshold;
-    CollisionObject<S>* obj = new CollisionObject<S>(std::shared_ptr<CollisionGeometry<S>>(model), Transform3<S>(Translation3<S>(Vector3<S>(x, y, z))));
+    CollisionObject<S>* obj = new CollisionObject<S>(
+        std::shared_ptr<CollisionGeometry<S>>(model),
+        Transform3<S>(Translation3<S>(Vector3<S>(x, y, z))));
     boxes.push_back(obj);
   }
 
@@ -591,30 +592,25 @@ void generateBoxesFromOctomapMesh(std::vector<CollisionObject<S>*>& boxes, OcTre
 }
 
 //==============================================================================
-inline octomap::OcTree* generateOcTree(double resolution)
-{
-  octomap::OcTree* tree = new octomap::OcTree(resolution);
+inline octomap::ColorOcTree* generateOcTree(double resolution) {
+  octomap::ColorOcTree* tree = new octomap::ColorOcTree(resolution);
 
   // insert some measurements of occupied cells
-  for(int x = -20; x < 20; x++)
-  {
-    for(int y = -20; y < 20; y++)
-    {
-      for(int z = -20; z < 20; z++)
-      {
+  for (int x = -20; x < 20; x++) {
+    for (int y = -20; y < 20; y++) {
+      for (int z = -20; z < 20; z++) {
         tree->updateNode(octomap::point3d(x * 0.05, y * 0.05, z * 0.05), true);
       }
     }
   }
 
   // insert some measurements of free cells
-  for(int x = -30; x < 30; x++)
-  {
-    for(int y = -30; y < 30; y++)
-    {
-      for(int z = -30; z < 30; z++)
-      {
-        tree->updateNode(octomap::point3d(x*0.02 -1.0, y*0.02-1.0, z*0.02-1.0), false);
+  for (int x = -30; x < 30; x++) {
+    for (int y = -30; y < 30; y++) {
+      for (int z = -30; z < 30; z++) {
+        tree->updateNode(
+            octomap::point3d(x * 0.02 - 1.0, y * 0.02 - 1.0, z * 0.02 - 1.0),
+            false);
       }
     }
   }
@@ -622,9 +618,9 @@ inline octomap::OcTree* generateOcTree(double resolution)
   return tree;
 }
 
-#endif // FCL_HAVE_OCTOMAP
+#endif  // FCL_HAVE_OCTOMAP
 
-} // namespace test
-} // namespace fcl
+}  // namespace test
+}  // namespace fcl
 
 #endif

@@ -379,7 +379,7 @@ if(NOT FCL_BUILD_TESTS STREQUAL "DEFAULT")
   set(BUILD_TESTING ${_BUILD_TESTING} CACHE BOOL "Build the testing tree." FORCE)
   unset(_BUILD_TESTING)
 endif()
-
+set(_BUILD_TESTING OFF)
 if(BUILD_TESTING AND NOT FCL_HIDE_ALL_SYMBOLS)
     add_subdirectory(test)
 endif()

@@ -37,30 +37,32 @@
 
 #include <gtest/gtest.h>
 
-#include "fcl/config.h"
-#include "fcl/geometry/octree/octree.h"
-#include "fcl/narrowphase/collision.h"
-#include "fcl/broadphase/broadphase_bruteforce.h"
-#include "fcl/broadphase/broadphase_spatialhash.h"
-#include "fcl/broadphase/broadphase_SaP.h"
 #include "fcl/broadphase/broadphase_SSaP.h"
-#include "fcl/broadphase/broadphase_interval_tree.h"
+#include "fcl/broadphase/broadphase_SaP.h"
+#include "fcl/broadphase/broadphase_bruteforce.h"
 #include "fcl/broadphase/broadphase_dynamic_AABB_tree.h"
 #include "fcl/broadphase/broadphase_dynamic_AABB_tree_array.h"
+#include "fcl/broadphase/broadphase_interval_tree.h"
+#include "fcl/broadphase/broadphase_spatialhash.h"
 #include "fcl/broadphase/default_broadphase_callbacks.h"
+#include "fcl/config.h"
 #include "fcl/geometry/geometric_shape_to_BVH_model.h"
-#include "test_fcl_utility.h"
+#include "fcl/geometry/octree/octree.h"
+#include "fcl/narrowphase/collision.h"
 #include "fcl_resources/config.h"
+#include "test_fcl_utility.h"
 
 using namespace fcl;
 
-/// @brief Octomap collision with an environment with 3 * env_size objects, compute cost
+/// @brief Octomap collision with an environment with 3 * env_size objects,
+/// compute cost
 template <typename S>
-void octomap_cost_test(S env_scale, std::size_t env_size, std::size_t num_max_cost_sources, bool use_mesh, bool use_mesh_octomap, double resolution = 0.1);
+void octomap_cost_test(S env_scale, std::size_t env_size,
+                       std::size_t num_max_cost_sources, bool use_mesh,
+                       bool use_mesh_octomap, double resolution = 0.1);
 
 template <typename S>
-void test_octomap_cost()
-{
+void test_octomap_cost() {
 #ifdef NDEBUG
   octomap_cost_test<S>(200, 100, 10, false, false);
   octomap_cost_test<S>(200, 1000, 10, false, false);
@@ -70,15 +72,13 @@ void test_octomap_cost()
 #endif
 }
 
-GTEST_TEST(FCL_OCTOMAP, test_octomap_cost)
-{
-//  test_octomap_cost<float>();
+GTEST_TEST(FCL_OCTOMAP, test_octomap_cost) {
+  //  test_octomap_cost<float>();
   test_octomap_cost<double>();
 }
 
 template <typename S>
-void test_octomap_cost_mesh()
-{
+void test_octomap_cost_mesh() {
 #ifdef NDEBUG
   octomap_cost_test<S>(200, 100, 10, true, false);
   octomap_cost_test<S>(200, 1000, 10, true, false);
@@ -88,25 +88,27 @@ void test_octomap_cost_mesh()
 #endif
 }
 
-GTEST_TEST(FCL_OCTOMAP, test_octomap_cost_mesh)
-{
-//  test_octomap_cost_mesh<float>();
+GTEST_TEST(FCL_OCTOMAP, test_octomap_cost_mesh) {
+  //  test_octomap_cost_mesh<float>();
   test_octomap_cost_mesh<double>();
 }
 
 template <typename S>
-void octomap_cost_test(S env_scale, std::size_t env_size, std::size_t num_max_cost_sources, bool use_mesh, bool use_mesh_octomap, double resolution)
-{
+void octomap_cost_test(S env_scale, std::size_t env_size,
+                       std::size_t num_max_cost_sources, bool use_mesh,
+                       bool use_mesh_octomap, double resolution) {
   std::vector<CollisionObject<S>*> env;
-  if(use_mesh)
+  if (use_mesh)
     test::generateEnvironmentsMesh(env, env_scale, env_size);
   else
     test::generateEnvironments(env, env_scale, env_size);
 
-  OcTree<S>* tree = new OcTree<S>(std::shared_ptr<const octomap::OcTree>(test::generateOcTree(resolution)));
+  OcTree<S>* tree = new OcTree<S>(std::shared_ptr<const octomap::ColorOcTree>(
+      test::generateOcTree(resolution)));
   CollisionObject<S> tree_obj((std::shared_ptr<CollisionGeometry<S>>(tree)));
 
-  DynamicAABBTreeCollisionManager<S>* manager = new DynamicAABBTreeCollisionManager<S>();
+  DynamicAABBTreeCollisionManager<S>* manager =
+      new DynamicAABBTreeCollisionManager<S>();
   manager->registerObjects(env);
   manager->setup();
 
@@ -140,7 +142,7 @@ void octomap_cost_test(S env_scale, std::size_t env_size, std::size_t num_max_co
   test::Timer timer2;
   timer2.start();
   std::vector<CollisionObject<S>*> boxes;
-  if(use_mesh_octomap)
+  if (use_mesh_octomap)
     test::generateBoxesFromOctomapMesh(boxes, *tree);
   else
     test::generateBoxesFromOctomap(boxes, *tree);
@@ -148,7 +150,8 @@ void octomap_cost_test(S env_scale, std::size_t env_size, std::size_t num_max_co
   t2.push_back(timer2.getElapsedTime());
 
   timer2.start();
-  DynamicAABBTreeCollisionManager<S>* manager2 = new DynamicAABBTreeCollisionManager<S>();
+  DynamicAABBTreeCollisionManager<S>* manager2 =
+      new DynamicAABBTreeCollisionManager<S>();
   manager2->registerObjects(boxes);
   manager2->setup();
   timer2.stop();
@@ -163,58 +166,67 @@ void octomap_cost_test(S env_scale, std::size_t env_size, std::size_t num_max_co
   timer2.stop();
   t2.push_back(timer2.getElapsedTime());
 
-  std::cout << cdata.result.numContacts() << " " << cdata3.result.numContacts() << " " << cdata2.result.numContacts() << std::endl;
-  std::cout << cdata.result.numCostSources() << " " << cdata3.result.numCostSources() << " " << cdata2.result.numCostSources() << std::endl;
+  std::cout << cdata.result.numContacts() << " " << cdata3.result.numContacts()
+            << " " << cdata2.result.numContacts() << std::endl;
+  std::cout << cdata.result.numCostSources() << " "
+            << cdata3.result.numCostSources() << " "
+            << cdata2.result.numCostSources() << std::endl;
 
   {
     std::vector<CostSource<S>> cost_sources;
     cdata.result.getCostSources(cost_sources);
-    for(std::size_t i = 0; i < cost_sources.size(); ++i)
-    {
-      std::cout << cost_sources[i].aabb_min.transpose() << " " << cost_sources[i].aabb_max.transpose() << " " << cost_sources[i].cost_density << std::endl;
+    for (std::size_t i = 0; i < cost_sources.size(); ++i) {
+      std::cout << cost_sources[i].aabb_min.transpose() << " "
+                << cost_sources[i].aabb_max.transpose() << " "
+                << cost_sources[i].cost_density << std::endl;
     }
 
     std::cout << std::endl;
 
     cdata3.result.getCostSources(cost_sources);
-    for(std::size_t i = 0; i < cost_sources.size(); ++i)
-    {
-      std::cout << cost_sources[i].aabb_min.transpose() << " " << cost_sources[i].aabb_max.transpose() << " " << cost_sources[i].cost_density << std::endl;
+    for (std::size_t i = 0; i < cost_sources.size(); ++i) {
+      std::cout << cost_sources[i].aabb_min.transpose() << " "
+                << cost_sources[i].aabb_max.transpose() << " "
+                << cost_sources[i].cost_density << std::endl;
     }
 
     std::cout << std::endl;
 
     cdata2.result.getCostSources(cost_sources);
-    for(std::size_t i = 0; i < cost_sources.size(); ++i)
-    {
-      std::cout << cost_sources[i].aabb_min.transpose() << " " << cost_sources[i].aabb_max.transpose() << " " << cost_sources[i].cost_density << std::endl;
+    for (std::size_t i = 0; i < cost_sources.size(); ++i) {
+      std::cout << cost_sources[i].aabb_min.transpose() << " "
+                << cost_sources[i].aabb_max.transpose() << " "
+                << cost_sources[i].cost_density << std::endl;
     }
 
     std::cout << std::endl;
-
   }
 
-  if(use_mesh) EXPECT_TRUE((cdata.result.numContacts() > 0) >= (cdata2.result.numContacts() > 0));
-  else EXPECT_TRUE(cdata.result.numContacts() >= cdata2.result.numContacts());
+  if (use_mesh)
+    EXPECT_TRUE((cdata.result.numContacts() > 0) >=
+                (cdata2.result.numContacts() > 0));
+  else
+    EXPECT_TRUE(cdata.result.numContacts() >= cdata2.result.numContacts());
 
   delete manager;
   delete manager2;
-  for(std::size_t i = 0; i < boxes.size(); ++i)
-    delete boxes[i];
+  for (std::size_t i = 0; i < boxes.size(); ++i) delete boxes[i];
 
   std::cout << "collision cost" << std::endl;
   std::cout << "1) octomap overall time: " << t1.overall_time << std::endl;
-  std::cout << "1') octomap overall time (as geometry): " << t3.overall_time << std::endl;
+  std::cout << "1') octomap overall time (as geometry): " << t3.overall_time
+            << std::endl;
   std::cout << "2) boxes overall time: " << t2.overall_time << std::endl;
   std::cout << "  a) to boxes: " << t2.records[0] << std::endl;
   std::cout << "  b) structure init: " << t2.records[1] << std::endl;
   std::cout << "  c) collision: " << t2.records[2] << std::endl;
-  std::cout << "Note: octomap may need more collides when using mesh, because octomap collision uses box primitive inside" << std::endl;
+  std::cout << "Note: octomap may need more collides when using mesh, because "
+               "octomap collision uses box primitive inside"
+            << std::endl;
 }
 
 //==============================================================================
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

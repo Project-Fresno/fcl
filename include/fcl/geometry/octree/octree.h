@@ -42,16 +42,17 @@
 
 #if FCL_HAVE_OCTOMAP
 
-#include <memory>
-#include <array>
-
+#include <octomap/ColorOcTree.h>
 #include <octomap/octomap.h>
-#include "fcl/math/bv/AABB.h"
+
+#include <array>
+#include <memory>
+
 #include "fcl/geometry/shape/box.h"
+#include "fcl/math/bv/AABB.h"
 #include "fcl/narrowphase/collision_object.h"
 
-namespace fcl
-{
+namespace fcl {
 
 /// @brief Octree is one type of collision geometry which can encode uncertainty
 /// information in the sensor data.
@@ -61,25 +62,23 @@ namespace fcl
 /// fcl/config.h if and only if octomap was found. Doxygen documentation will
 /// be generated whether or not octomap was found.
 template <typename S>
-class FCL_EXPORT OcTree : public CollisionGeometry<S>
-{
-private:
-  std::shared_ptr<const octomap::OcTree> tree;
+class FCL_EXPORT OcTree : public CollisionGeometry<S> {
+ private:
+  std::shared_ptr<const octomap::ColorOcTree> tree;
 
   S default_occupancy;
 
   S occupancy_threshold_log_odds;
   S free_threshold_log_odds;
 
-public:
-
-  typedef octomap::OcTreeNode OcTreeNode;
+ public:
+  typedef octomap::ColorOcTreeNode OcTreeNode;
 
   /// @brief construct octree with a given resolution
   OcTree(S resolution);
 
   /// @brief construct octree from octomap
-  OcTree(const std::shared_ptr<const octomap::OcTree>& tree_);
+  OcTree(const std::shared_ptr<const octomap::ColorOcTree>& tree_);
 
   /// @brief compute the AABB<S> for the octree in its local coordinate system
   void computeLocalAABB();
@@ -124,8 +123,9 @@ public:
   OcTreeNode* getNodeChild(OcTreeNode* node, unsigned int childIdx);
 
   /// @return const ptr to child number childIdx of node
-  const OcTreeNode* getNodeChild(const OcTreeNode* node, unsigned int childIdx) const;
-      
+  const OcTreeNode* getNodeChild(const OcTreeNode* node,
+                                 unsigned int childIdx) const;
+
   /// @brief return true if the child at childIdx exists
   bool nodeChildExists(const OcTreeNode* node, unsigned int childIdx) const;
 
@@ -168,21 +168,17 @@ public:
   ///                   cell.
   /// @return The node pointer for the given query cell id, or nullptr if not
   ///         found.
-  const OcTreeNode* getNodeByQueryCellId(
-      intptr_t id,
-      const Vector3<S>& point,
-      AABB<S>* aabb = nullptr,
-      octomap::OcTreeKey* key = nullptr,
-      unsigned int* depth = nullptr) const;
+  const OcTreeNode* getNodeByQueryCellId(intptr_t id, const Vector3<S>& point,
+                                         AABB<S>* aabb = nullptr,
+                                         octomap::OcTreeKey* key = nullptr,
+                                         unsigned int* depth = nullptr) const;
 
-private:
+ private:
   // Get the leaf_bbx_iterator pointing to the given cell given a point on or
   // in the cell and the query id.
   // Returns true if the cell was found, and false otherwise.
-  bool getOctomapIterator(
-      intptr_t id,
-      const Vector3<S>& point,
-      octomap::OcTree::leaf_bbx_iterator* out) const;
+  bool getOctomapIterator(intptr_t id, const Vector3<S>& point,
+                          octomap::ColorOcTree::leaf_bbx_iterator* out) const;
 };
 
 using OcTreef = OcTree<float>;
@@ -190,13 +186,13 @@ using OcTreed = OcTree<double>;
 
 /// @brief compute the bounding volume of an octree node's i-th child
 template <typename S>
-FCL_EXPORT
-void computeChildBV(const AABB<S>& root_bv, unsigned int i, AABB<S>& child_bv);
+FCL_EXPORT void computeChildBV(const AABB<S>& root_bv, unsigned int i,
+                               AABB<S>& child_bv);
 
-} // namespace fcl
+}  // namespace fcl
 
 #include "fcl/geometry/octree/octree-inl.h"
 
-#endif // #if FCL_HAVE_OCTOMAP
+#endif  // #if FCL_HAVE_OCTOMAP
 
 #endif
